@@ -1,0 +1,43 @@
+# AI exclude file
+# Files and directories listed here will be excluded from AI context
+
+# Build outputs
+build/
+target/
+out/
+dist/
+
+# IDE specific
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Gradle
+.gradle/
+gradle-wrapper.jar
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+.tmp/
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Node modules (if using any frontend)
+node_modules/
+
+# Test coverage reports
+coverage/
+.nyc_output/
+
+# AI chat history - exclude from AI processing
+.aichat/
