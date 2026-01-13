@@ -1,0 +1,53 @@
+# Kafka Patterns
+
+## Dead Letter Queue (DLQ)
+**When message processing fails:**
+1. Send to DLQ topic
+2. DLQ naming: `{original-topic-name}-dlq`
+3. Include metadata in DLQ message
+
+**DLQ Message structure:**
+```kotlin
+data class DLQMessage(
+    val originalTopic: String,
+    val errorReason: String,
+    val timestamp: Instant,
+    val originalPayload: String,
+    val retryCount: Int = 0
+)
+```
+
+## Producer Configuration
+- **Enable idempotent producer**: `enable.idempotence=true`
+- Use appropriate compression (gzip, snappy)
+- Configure max request size for chunking
+
+## Chunking Large Batches
+If batch > 1MB:
+1. Split into chunks ≤ 1MB
+2. Add `batch-id` header to all chunks
+3. Publish chunks with same partition key
+
+## Consumer Configuration
+- Idempotent consumers with manual offset management for critical operations
+- Clear consumer group naming convention
+- Error handling: ALL errors → DLQ (no message loss)
+
+**Consumer pattern:**
+```kotlin
+@KafkaListener(topics = ["decision-logs"], groupId = "s3-writer-group")
+fun consumeForS3(message: String, acknowledgment: Acknowledgment) {
+    try {
+        processAndWriteToS3(message)
+        acknowledgment.acknowledge()
+    } catch (e: Exception) {
+        sendToDLQ(message, e)
+        acknowledgment.acknowledge() // Prevent reprocessing
+    }
+}
+```
+
+## Key Rules
+- Never lose messages - DLQ is mandatory for error scenarios
+- Idempotency: handle duplicate messages gracefully
+- Manual offset management for critical paths

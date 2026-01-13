@@ -1,0 +1,34 @@
+# Architecture & Structure
+
+## Architectural Pattern
+Event-Driven Architecture with clear layer separation:
+```
+API Layer (Controllers, DTOs) → Domain Logic (Services) → Kafka Producers/Consumers → Storage Adapters (S3, OpenSearch)
+```
+
+## Package Structure
+```
+ai.lab.api              - REST Controllers, Request/Response DTOs
+ai.lab.api.advice       - GlobalExceptionAdvice (@ControllerAdvice)
+ai.lab.domain           - Domain models, value objects
+ai.lab.service          - Business logic services
+ai.lab.kafka            - Kafka producers and consumers
+ai.lab.storage          - Storage adapters (S3, OpenSearch)
+ai.lab.exception        - Custom exception classes
+ai.lab.config           - Configuration classes
+```
+
+## Design Principles
+- **Composition over inheritance**
+- **Extend, don't modify** - prefer creating new components over modifying existing core logic
+- **Single Responsibility Principle** - each class has one clear purpose
+- **Dependency Injection** - use Spring's DI, avoid manual instantiation
+- One class per file, file name matches class name
+- Keep files under 300 lines when possible
+
+## Code Generation Order
+1. Domain layer (models first)
+2. Services (business logic)
+3. Adapters (Kafka, S3, OpenSearch)
+4. API layer (controllers, DTOs)
+5. Tests (unit, then integration)

@@ -1,0 +1,42 @@
+# Configuration & Secrets Management
+
+## Configuration Files
+- **Primary**: `application.yaml`
+- **Local dev overrides**: `application-local.yaml`
+- **Test config**: `application-test.yaml` (if needed)
+
+## Configuration Properties
+Use Spring's `@ConfigurationProperties` for typed configuration:
+```kotlin
+@ConfigurationProperties(prefix = "kafka.producer")
+data class KafkaProducerConfig(
+    val bootstrapServers: String,
+    val maxRequestSize: Int,
+    val compressionType: String
+)
+```
+
+## Secrets Management - CRITICAL RULES
+
+❌ **NEVER hardcode secrets** in code or configuration files
+✅ **ALWAYS use environment variables** for:
+- Passwords
+- API Keys
+- Credentials
+- Tokens
+- Connection strings with sensitive data
+
+**Correct example:**
+```yaml
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+  security:
+    api-key: ${KAFKA_API_KEY}
+```
+
+**WRONG - never do this:**
+```yaml
+kafka:
+  security:
+    api-key: "hardcoded-secret-123"  # NEVER!
+```

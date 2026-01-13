@@ -1,0 +1,84 @@
+# Integration Tests - Spock Framework 2.x
+
+## Test Location & Structure
+- **Location**: `src/integrationTest/groovy/`
+- **Base class**: `IntegrationSpec` (shared configuration)
+- **Framework**: Spock 2.x with `@SpringBootTest`
+- **Language**: Groovy
+
+## Base Integration Spec
+```groovy
+@SpringBootTest
+@ActiveProfiles("test")
+abstract class IntegrationSpec extends Specification {
+    @Autowired
+    protected TestRestTemplate restTemplate
+    @Autowired
+    protected KafkaTemplate<String, String> kafkaTemplate
+}
+```
+
+## Docker Compose Environment
+- Docker Compose defines: Kafka, S3 (LocalStack), OpenSearch
+- Gradle task `startTestEnvironment` runs ONCE before integration tests
+- Gradle task `stopTestEnvironment` runs ONCE after all tests
+- Tests do NOT start/stop containers individually
+
+## Kafka Testing
+**Use unique topics per test:**
+```groovy
+def topicName = "test-decision-logs-${UUID.randomUUID()}"
+```
+
+## Async Operations - PollingConditions
+```groovy
+import spock.util.concurrent.PollingConditions
+
+def "should index in OpenSearch within timeout"() {
+    given:
+    def conditions = new PollingConditions(timeout: 60, delay: 1)
+    
+    when:
+    postBatch(batch)
+    
+    then:
+    conditions.eventually {
+        def results = searchOpenSearch(batch.batchId)
+        results.size() == batch.logs.size()
+    }
+}
+```
+
+## DLQ Testing (MANDATORY)
+**MUST test for each consumer:**
+```groovy
+def "should send message to DLQ when processing fails"() {
+    given: "a message that will cause error"
+    def invalidMessage = createInvalidMessage()
+    
+    when: "message is published"
+    publishToKafka(invalidMessage)
+    
+    then: "message appears in DLQ with metadata"
+    new PollingConditions(timeout: 10).eventually {
+        def dlqMessage = consumeFromDLQ("original-topic-dlq")
+        dlqMessage.originalTopic == "original-topic"
+        dlqMessage.errorReason != null
+    }
+}
+```
+
+## Integration Test Scope
+**✅ Integration tests should:**
+- Test complete end-to-end flow
+- Cover each use case from PRD
+- Use `@SpringBootTest` (full context)
+- Use real Docker containers
+- Verify successful processing
+- Verify DLQ behavior
+- Use data-driven tests for edge cases
+
+**❌ Integration tests should NOT:**
+- Test retry logic (out of scope)
+- Test performance/latency SLAs (environment dependent)
+- Mock Kafka, S3, or OpenSearch (use real test instances)

@@ -1,0 +1,78 @@
+# Unit Tests - Spock Framework 2.x
+
+## Test Location & Structure
+- **Location**: `src/test/groovy/`
+- **Naming**: `{ClassName}Spec.groovy` (MUST use `Spec` suffix)
+- **Framework**: Spock 2.x (JUnit 5 compatible)
+- **Language**: Groovy
+
+## Test Method Naming
+**Convention**: `"should do X when Y"`
+
+```groovy
+def "should publish batch to Kafka when batch is valid"() {
+    // test body
+}
+```
+
+## Test Structure
+**Use `given-when-then` blocks:**
+```groovy
+def "should chunk batch when size exceeds 1MB"() {
+    given: "a batch larger than 1MB"
+    def largeBatch = createLargeBatch(2_000_000)
+    
+    when: "chunking is performed"
+    def chunks = service.chunkBatch(largeBatch)
+    
+    then: "batch is split into multiple chunks"
+    chunks.size() > 1
+    chunks.every { chunk -> calculateSize(chunk) <= 1_000_000 }
+}
+```
+
+**For parameterized tests, use `where` blocks:**
+```groovy
+def "should handle batch of size #batchSize"() {
+    given: "a batch with specific size"
+    def batch = createBatch(batchSize)
+    
+    when: "processing the batch"
+    def result = service.processBatch(batch)
+    
+    then: "batch is processed successfully"
+    result.successful == batchSize
+    
+    where:
+    batchSize << [100, 1000, 10000, 100000]
+}
+```
+
+## Mocking with Spock
+**Use Spock's built-in mocking:**
+```groovy
+KafkaTemplate kafkaTemplate = Mock(KafkaTemplate)
+S3Client s3Client = Mock(S3Client)
+
+// Verify interaction
+1 * kafkaTemplate.send("decision-logs", _)
+```
+
+**Rules:**
+- `Mock()` for verifying interactions
+- `Stub()` for returning test data
+- **DO NOT use** Mockk or other libraries
+
+## Unit Test Scope
+**✅ Unit tests should:**
+- Test business logic in isolation
+- Mock all external dependencies
+- Run fast (milliseconds)
+- NOT start Spring context
+- Run during `build` phase
+
+**❌ Unit tests should NOT:**
+- Start Spring Boot application
+- Connect to real databases/Kafka
+- Make HTTP calls
+- Test infrastructure concerns

@@ -1,0 +1,77 @@
+# Documentation & Code Guidelines
+
+## KDoc Requirements
+**MUST document:**
+- All public classes
+- All public methods and functions
+- All public APIs (REST endpoints)
+- Kafka producers and consumers
+- Complex business logic
+
+## KDoc Structure
+```kotlin
+/**
+ * Service for processing OPA decision log batches.
+ * 
+ * Receives batches, performs chunking if needed, publishes to Kafka.
+ * 
+ * @property kafkaTemplate Template for Kafka publishing
+ * @property config Batch processing configuration
+ */
+class DecisionLogService(
+    private val kafkaTemplate: KafkaTemplate<String, String>,
+    private val config: BatchConfig
+) {
+    /**
+     * Processes and publishes batch to Kafka.
+     * 
+     * Chunks batch if > 1MB. All chunks share same batch ID.
+     * 
+     * @param batch List of decision logs
+     * @return ProcessingResult with status
+     * @throws KafkaPublishException if publishing fails
+     * @throws InvalidBatchException if validation fails
+     */
+    fun processBatch(batch: List<DecisionLog>): ProcessingResult
+}
+```
+
+## API Endpoint Documentation
+**Include JSON examples:**
+```kotlin
+/**
+ * Accepts OPA decision log batch.
+ * 
+ * Example:
+ * ```json
+ * {
+ *   "batchId": "batch-123",
+ *   "logs": [{"decisionId": "dec-1", "timestamp": "2026-01-13T10:00:00Z"}]
+ * }
+ * ```
+ */
+@PostMapping("/decision-logs")
+fun acceptBatch(@RequestBody request: DecisionLogRequest)
+```
+
+## Out of Scope
+**DO NOT implement:**
+- ❌ Observability infrastructure (metrics, tracing) - provided by environment
+- ❌ Deployment strategies
+- ❌ CI/CD pipelines
+- ❌ Performance/NFR testing
+- ❌ Infrastructure provisioning
+
+## Quick Checklist
+Before code completion, verify:
+- [ ] Follows Event-Driven Architecture
+- [ ] No hardcoded secrets
+- [ ] All external calls have timeouts
+- [ ] Errors use correct HTTP status codes
+- [ ] Failed messages go to DLQ with metadata
+- [ ] Input validation on API endpoints
+- [ ] Unit tests: Spock `Spec` suffix, `given-when-then`
+- [ ] Integration tests: end-to-end coverage
+- [ ] KDoc on all public APIs with examples
+- [ ] Data classes for DTOs
+- [ ] Extension functions only for transformations

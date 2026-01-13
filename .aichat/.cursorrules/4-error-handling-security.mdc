@@ -1,0 +1,46 @@
+# Error Handling & Security
+
+## Custom Exceptions
+- Location: `ai.lab.exception` package
+- Naming: End with `Exception` suffix
+- Examples: `KafkaPublishException`, `S3WriteException`, `InvalidBatchException`
+
+## Global Exception Handling
+Create `GlobalExceptionAdvice` in `ai.lab.api.advice` with `@RestControllerAdvice`
+
+## HTTP Status Code Rules
+- **400 Bad Request**: Invalid request format, malformed JSON
+- **422 Unprocessable Entity**: Validation errors, business rule violations
+- **500 Internal Server Error**: Application errors during processing
+
+## Logging
+- **Errors**: `logger.error("message", exception)`
+- **Warnings**: `logger.warn("message")`
+- Include context (batchId, userId) in log messages
+- Use structured logging when possible
+
+## Input Validation
+**ALWAYS validate:**
+- Request size (reject if > configured limit)
+- JSON structure and format
+- Required fields presence
+- Data types and ranges
+
+Use `@Valid` on request parameters.
+
+## Authentication
+- API Key based authentication
+- Store keys in Kubernetes Secrets
+- Support multiple simultaneous active keys
+- Validate on every request via `@RequestHeader("X-API-Key")`
+
+## Timeouts
+**Set timeouts for ALL external calls:**
+- Kafka producer: `request.timeout.ms`
+- S3 client: connection and request timeouts
+- OpenSearch client: connection and socket timeouts
+
+## Data Sanitization
+- Sanitize all user inputs before storage
+- Escape special characters for OpenSearch queries
+- Validate JSON structure before Kafka publish

@@ -1,0 +1,37 @@
+# Kotlin Coding Conventions
+
+## Data Classes
+**ALWAYS use `data class` for:**
+- DTOs (Data Transfer Objects)
+- Request/Response objects
+- Kafka message payloads
+- Value objects without behavior
+
+## Sealed Classes
+**Use `sealed class` for:**
+- Domain state representation (e.g., `sealed class ProcessingResult`)
+- Result types with multiple outcomes
+
+## Extension Functions
+**✅ Use for:** Data transformation, mapping between layers (DTO ↔ Domain ↔ Kafka)
+**❌ NOT for:** Core business logic, complex operations with side effects
+
+Example:
+```kotlin
+fun DecisionLog.toKafkaMessage(): KafkaDecisionMessage { /* transformation */ }
+```
+
+## Naming Conventions
+- Classes: `PascalCase` (e.g., `DecisionLogService`)
+- Functions/methods: `camelCase` (e.g., `processDecisionLogs`)
+- Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_BATCH_SIZE`)
+- Package names: lowercase, singular nouns
+
+## Code Style
+- Use meaningful variable names (no single letters except loops/lambdas)
+- Extract magic numbers to named constants
+- Prefer `when` over long `if-else` chains
+- Use Elvis operator `?:` for null handling
+- Prefer functional style: `map`, `filter`, `fold` over imperative loops
+- Prefer `val` over `var` (immutability)
+- Constructor injection over field injection
